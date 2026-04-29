@@ -1,0 +1,7 @@
+interface:
+  display_name: "Design Prompt Graph"
+  short_description: "Find design prompts from the local graph"
+  default_prompt: "Use $design-prompt-graph to find reference prompts for a visual design task."
+
+policy:
+  allow_implicit_invocation: true
