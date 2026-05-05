@@ -21,8 +21,21 @@
 
     <header class="topnav">
       <a class="brand" href="#top">GPTImage2PromptGraph</a>
+      <label class="search-box topnav-search" id="search">
+        <span>Search the prompt corpus</span>
+        <input
+          id="searchInput"
+          type="search"
+          autocomplete="off"
+          spellcheck="false"
+          placeholder="輸入 prompt 關鍵字、風格、主題、語言..."
+        />
+      </label>
+      <div class="control-meta topnav-meta">
+        <div id="resultCount" class="result-count">載入中...</div>
+        <div class="result-subcopy" id="resultSubcopy"></div>
+      </div>
       <nav aria-label="主要導覽">
-        <a href="#search">搜尋</a>
         <a href="#filters">篩選</a>
         <a href="https://github.com/cocoaswifty/GPTImage2PromptGraph" target="_blank" rel="noreferrer">GitHub</a>
       </nav>
@@ -43,23 +56,6 @@
           </div>
         </div>
         <div class="hero-stats" id="stats"></div>
-      </section>
-
-      <section class="controls panel" id="search" aria-label="搜尋與篩選" data-od-id="search-controls">
-        <label class="search-box">
-          <span>Search the prompt corpus</span>
-          <input
-            id="searchInput"
-            type="search"
-            autocomplete="off"
-            spellcheck="false"
-            placeholder="輸入 prompt 關鍵字、風格、主題、語言，例如 typography、poster、日系..."
-          />
-        </label>
-        <div class="control-meta">
-          <div id="resultCount" class="result-count">載入中...</div>
-          <div class="result-subcopy" id="resultSubcopy"></div>
-        </div>
       </section>
 
       <section class="panel chip-panel" data-od-id="quick-entry">
@@ -85,11 +81,9 @@
       <form method="dialog" class="dialog-shell">
         <button class="dialog-close" value="cancel" aria-label="關閉">×</button>
         <div class="dialog-media">
-          <img id="dialogImage" alt="" />
-          <div class="dialog-image-actions">
-            <a id="openImageLink" class="dialog-link" target="_blank" rel="noreferrer">開啟圖片</a>
-            <a id="openSourceLink" class="dialog-link" target="_blank" rel="noreferrer">原始來源</a>
-          </div>
+          <a id="openImageLink" class="dialog-image-link" target="_blank" rel="noreferrer" aria-label="開啟圖片">
+            <img id="dialogImage" alt="" />
+          </a>
         </div>
         <div class="dialog-body">
           <div class="dialog-header">
@@ -100,9 +94,7 @@
             <button id="copyPromptButton" class="action-button primary" type="button">複製 prompt</button>
           </div>
           <div class="dialog-tags" id="dialogTags"></div>
-          <p id="dialogDescription" class="dialog-description"></p>
           <pre id="dialogPrompt" class="prompt-block"></pre>
-          <div class="dialog-footnotes" id="dialogFootnotes"></div>
         </div>
       </form>
     </dialog>

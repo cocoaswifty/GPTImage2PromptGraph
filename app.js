@@ -1,6 +1,7 @@
 const DATA_URL = new URL("./data/cases.json", document.baseURI).toString();
 const INDEX_URL = new URL("./index.json", document.baseURI).toString();
 const PAGE_SIZE = 48;
+const SEARCH_DEBOUNCE_MS = 320;
 
 const FIELD_WEIGHTS = {
   title: 6,
@@ -43,11 +44,8 @@ const dom = {
   dialogMeta: document.querySelector("#dialogMeta"),
   dialogTitle: document.querySelector("#dialogTitle"),
   dialogTags: document.querySelector("#dialogTags"),
-  dialogDescription: document.querySelector("#dialogDescription"),
   dialogPrompt: document.querySelector("#dialogPrompt"),
-  dialogFootnotes: document.querySelector("#dialogFootnotes"),
   openImageLink: document.querySelector("#openImageLink"),
-  openSourceLink: document.querySelector("#openSourceLink"),
   copyPromptButton: document.querySelector("#copyPromptButton"),
 };
 
@@ -90,13 +88,19 @@ async function init() {
 }
 
 function bindEvents() {
+  let searchTimer = 0;
+
   dom.searchInput.addEventListener("input", () => {
-    state.query = dom.searchInput.value;
-    state.visibleCount = PAGE_SIZE;
-    applyState();
+    window.clearTimeout(searchTimer);
+    searchTimer = window.setTimeout(() => {
+      state.query = dom.searchInput.value;
+      state.visibleCount = PAGE_SIZE;
+      applyState();
+    }, SEARCH_DEBOUNCE_MS);
   });
 
   dom.clearButton.addEventListener("click", () => {
+    window.clearTimeout(searchTimer);
     state.query = "";
     state.tags.clear();
     state.categories.clear();
@@ -542,29 +546,13 @@ function openCaseDialog(caseId) {
   dom.dialogMeta.textContent = `${item.category} · ${item.origin_collection} · ${item.author || "Unknown author"}`;
   dom.dialogTitle.textContent = item.title;
   dom.dialogTags.innerHTML = (item.tags || []).map((tag) => `<span class="tag-pill">${escapeHtml(tag)}</span>`).join("");
-  dom.dialogDescription.textContent = item.description || "沒有額外描述，直接查看 prompt 即可。";
   dom.dialogPrompt.textContent = item.prompt || "";
-  dom.dialogFootnotes.innerHTML = [
-    footnoteLine("Prompt chars", item.prompt_chars.toLocaleString()),
-    footnoteLine("Source URL", item.source_url ? linkify(item.source_url) : "N/A"),
-    footnoteLine("Image path", imageUrl),
-  ].join("");
   dom.openImageLink.href = imageUrl;
-  dom.openSourceLink.href = item.source_url || imageUrl;
 
   if (!dom.dialog.open) {
     dom.dialog.showModal();
   }
   dom.copyPromptButton.textContent = "複製 prompt";
-}
-
-function footnoteLine(label, value) {
-  return `<div><strong>${escapeHtml(label)}:</strong> ${value}</div>`;
-}
-
-function linkify(url) {
-  const safe = escapeHtml(url);
-  return `<a href="${safe}" target="_blank" rel="noreferrer">${safe}</a>`;
 }
 
 function createExcerpt(text, maxLength) {

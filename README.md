@@ -2,8 +2,6 @@
 
 這個目錄是給 LLM / Agent 直接檢索用的整合版 prompt corpus，也是一個可安裝的 Skill。使用者需要設計、繪圖、生成圖片、UI mockup、海報、商品圖、資訊圖、角色設定或品牌視覺時，Skill 會用漸進式披露方式從本圖譜找到合適 prompt 作為設計參考。
 
-不要把整包資料一次丟給 LLM。正確方式是先讀報告與索引，再查少量候選案例，最後只讀選中的完整 prompt。
-
 Live Demo: [https://cocoaswifty.github.io/GPTImage2PromptGraph/](https://cocoaswifty.github.io/GPTImage2PromptGraph/)
 
 ## 檔案
@@ -90,26 +88,3 @@ bash scripts/query_prompt_graph.sh \
 - `description`: 描述文字，如果來源有提供。
 - `prompt`: 完整 prompt。
 - `retrieval_text`: 給 LLM/RAG 的合併文字。
-
-## Graph Schema
-
-`graph.json` 的主要 node types：
-
-- `corpus`
-- `origin_collection`
-- `category`
-- `case`
-- `author`
-- `image`
-- `tag`
-
-主要 edge relations：
-
-- `has_origin_collection`
-- `has_category`
-- `contains_case`
-- `originated_from`
-- `credited_to`
-- `has_image`
-- `has_tag`
-- `similar_title`
