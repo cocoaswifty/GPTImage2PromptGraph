@@ -1,6 +1,6 @@
 const DATA_URL = new URL("./data/cases.json", document.baseURI).toString();
 const INDEX_URL = new URL("./index.json", document.baseURI).toString();
-const PAGE_SIZE = 48;
+const PAGE_SIZE = 24;
 const SEARCH_DEBOUNCE_MS = 320;
 
 const FIELD_WEIGHTS = {
@@ -25,7 +25,12 @@ const state = {
   categories: new Set(),
   origins: new Set(),
   visibleCount: PAGE_SIZE,
+  renderedCount: 0,
   selectedCaseId: null,
+  resultIds: [],
+  scoredResults: [],
+  candidateCount: 0,
+  isAppending: false,
 };
 
 const dom = {
@@ -46,6 +51,8 @@ const dom = {
   dialogTags: document.querySelector("#dialogTags"),
   dialogPrompt: document.querySelector("#dialogPrompt"),
   openImageLink: document.querySelector("#openImageLink"),
+  previousCaseButton: document.querySelector("#previousCaseButton"),
+  nextCaseButton: document.querySelector("#nextCaseButton"),
   copyPromptButton: document.querySelector("#copyPromptButton"),
 };
 
@@ -95,34 +102,45 @@ function bindEvents() {
     searchTimer = window.setTimeout(() => {
       state.query = dom.searchInput.value;
       state.visibleCount = PAGE_SIZE;
-      applyState();
+      applyState({ resetRendered: true });
     }, SEARCH_DEBOUNCE_MS);
   });
 
-  dom.clearButton.addEventListener("click", () => {
-    window.clearTimeout(searchTimer);
-    state.query = "";
-    state.tags.clear();
-    state.categories.clear();
-    state.origins.clear();
-    state.visibleCount = PAGE_SIZE;
-    dom.searchInput.value = "";
-    syncChips();
-    applyState({ resetSelection: true });
-  });
+  if (dom.clearButton) {
+    dom.clearButton.addEventListener("click", () => {
+      window.clearTimeout(searchTimer);
+      state.query = "";
+      state.tags.clear();
+      state.categories.clear();
+      state.origins.clear();
+      state.visibleCount = PAGE_SIZE;
+      state.renderedCount = 0;
+      dom.searchInput.value = "";
+      syncChips();
+      applyState({ resetSelection: true, resetRendered: true });
+    });
+  }
 
-  dom.randomButton.addEventListener("click", () => {
-    const candidates = getFilteredCases();
-    if (!candidates.length) {
-      return;
-    }
-    const randomCase = candidates[Math.floor(Math.random() * candidates.length)];
-    openCaseDialog(randomCase.id);
-  });
+  if (dom.randomButton) {
+    dom.randomButton.addEventListener("click", () => {
+      if (!state.resultIds.length) {
+        return;
+      }
+      const randomCaseId = state.resultIds[Math.floor(Math.random() * state.resultIds.length)];
+      openCaseDialog(randomCaseId);
+    });
+  }
 
   dom.loadMoreButton.addEventListener("click", () => {
-    state.visibleCount += PAGE_SIZE;
-    applyState();
+    appendNextPage();
+  });
+
+  dom.previousCaseButton.addEventListener("click", () => {
+    openAdjacentCase(-1);
+  });
+
+  dom.nextCaseButton.addEventListener("click", () => {
+    openAdjacentCase(1);
   });
 
   dom.copyPromptButton.addEventListener("click", async () => {
@@ -149,7 +167,19 @@ function bindEvents() {
     if (event.key === "Escape" && dom.dialog.open) {
       dom.dialog.close();
     }
+    if (dom.dialog.open && !isTextEditingTarget(event.target)) {
+      if (event.key === "ArrowLeft") {
+        event.preventDefault();
+        openAdjacentCase(-1);
+      }
+      if (event.key === "ArrowRight") {
+        event.preventDefault();
+        openAdjacentCase(1);
+      }
+    }
   });
+
+  setupAutoLoad();
 }
 
 function renderHeaderStats(payload) {
@@ -240,8 +270,9 @@ function toggleChip(group, value) {
     target.add(value);
   }
   state.visibleCount = PAGE_SIZE;
+  state.renderedCount = 0;
   syncChips();
-  applyState();
+  applyState({ resetRendered: true });
 }
 
 function syncChips() {
@@ -262,9 +293,13 @@ function getStateSet(group) {
   return state.origins;
 }
 
-function applyState({ resetSelection = false } = {}) {
+function applyState({ resetSelection = false, resetRendered = false } = {}) {
   if (resetSelection) {
     state.selectedCaseId = null;
+  }
+  if (resetRendered) {
+    state.renderedCount = 0;
+    state.isAppending = false;
   }
 
   const filtered = getFilteredCases();
@@ -273,22 +308,29 @@ function applyState({ resetSelection = false } = {}) {
     .filter(({ score }) => score > 0 || hasNoSearchContext())
     .sort((a, b) => b.score - a.score || a.item.title.localeCompare(b.item.title));
 
-  const visible = scored.slice(0, state.visibleCount);
+  state.scoredResults = scored;
+  state.resultIds = scored.map(({ item }) => item.id);
+  state.candidateCount = filtered.length;
 
-  renderResults(visible, scored.length);
-  updateMeta(scored.length, filtered.length);
+  renderResults({ reset: resetRendered || state.renderedCount === 0 });
+  updateMeta();
 
-  if (!state.selectedCaseId && visible.length) {
-    state.selectedCaseId = visible[0].item.id;
+  if (!state.selectedCaseId && state.resultIds.length) {
+    state.selectedCaseId = state.resultIds[0];
   }
 
   if (state.selectedCaseId) {
     const current = cache.casesById.get(state.selectedCaseId);
-    if (current && !visible.some(({ item }) => item.id === current.id) && visible.length) {
-      state.selectedCaseId = visible[0].item.id;
+    if (current && !state.resultIds.includes(current.id) && state.resultIds.length) {
+      state.selectedCaseId = state.resultIds[0];
     }
   }
 
+  if (!state.resultIds.length) {
+    state.selectedCaseId = null;
+  }
+
+  updateDialogNavigation();
   syncLoadMore(scored.length);
 }
 
@@ -459,23 +501,40 @@ function hasNoSearchContext() {
   return !normalizeSpace(state.query).length && !state.tags.size && !state.categories.size && !state.origins.size;
 }
 
-function renderResults(scored, total) {
-  if (!scored.length) {
+function renderResults({ reset = false } = {}) {
+  if (!state.scoredResults.length) {
     dom.results.innerHTML = `
       <div class="empty-state">
         <strong>沒有符合條件的案例。</strong>
         <div>試著清除篩選、放寬關鍵字，或先點上方快速入口。</div>
       </div>
     `;
+    state.renderedCount = 0;
     return;
   }
 
-  const selectedId = state.selectedCaseId || scored[0].item.id;
-  const cards = scored
-    .map(({ item }, index) => renderCard(item, index === 0 && !state.selectedCaseId))
+  const selectedId = state.selectedCaseId || state.scoredResults[0].item.id;
+  const start = reset ? 0 : state.renderedCount;
+  const end = Math.min(state.visibleCount, state.scoredResults.length);
+  const nextItems = state.scoredResults.slice(start, end);
+  const cards = nextItems
+    .map(({ item }, index) => renderCard(item, start + index === 0 && !state.selectedCaseId))
     .join("");
-  dom.results.innerHTML = cards;
-  dom.results.querySelectorAll("[data-case-id]").forEach((card) => {
+  if (reset) {
+    dom.results.innerHTML = cards;
+  } else if (cards) {
+    dom.results.insertAdjacentHTML("beforeend", cards);
+  }
+  state.renderedCount = end;
+  bindResultCards(reset ? dom.results : dom.results);
+  if (selectedId) {
+    state.selectedCaseId = selectedId;
+  }
+}
+
+function bindResultCards(root) {
+  root.querySelectorAll("[data-case-id]:not([data-bound])").forEach((card) => {
+    card.dataset.bound = "true";
     card.addEventListener("click", () => openCaseDialog(card.dataset.caseId));
     card.addEventListener("keydown", (event) => {
       if (event.key === "Enter" || event.key === " ") {
@@ -484,9 +543,6 @@ function renderResults(scored, total) {
       }
     });
   });
-  if (selectedId) {
-    state.selectedCaseId = selectedId;
-  }
 }
 
 function renderCard(item, isPrimary) {
@@ -496,7 +552,7 @@ function renderCard(item, isPrimary) {
   return `
     <article class="case-card" data-case-id="${escapeHtml(item.id)}" tabindex="0" aria-label="${escapeHtml(item.title)}">
       <div class="thumb">
-        <img src="${escapeHtml(imageUrl)}" alt="${escapeHtml(item.title)}" loading="lazy" />
+        <img src="${escapeHtml(imageUrl)}" alt="${escapeHtml(item.title)}" loading="lazy" decoding="async" fetchpriority="low" />
       </div>
       <div class="card-body">
         <div>
@@ -519,17 +575,50 @@ function renderCard(item, isPrimary) {
   `;
 }
 
-function updateMeta(visibleCount, candidateCount) {
-  dom.resultCount.textContent = `${visibleCount.toLocaleString()} / ${cache.cases.length.toLocaleString()} 結果`;
-  dom.resultSubcopy.textContent = `${candidateCount.toLocaleString()} 個候選池 · ${state.visibleCount.toLocaleString()} 顯示中`;
+function updateMeta() {
+  dom.resultCount.textContent = `${state.scoredResults.length.toLocaleString()} / ${cache.cases.length.toLocaleString()} 結果`;
+  dom.resultSubcopy.textContent = `${state.candidateCount.toLocaleString()} 個候選池 · ${state.renderedCount.toLocaleString()} 顯示中`;
 }
 
 function syncLoadMore(total) {
-  const shouldShow = total > state.visibleCount;
+  const shouldShow = total > state.renderedCount;
   dom.loadMoreButton.hidden = !shouldShow;
   if (shouldShow) {
-    dom.loadMoreButton.textContent = `載入更多 (${Math.min(state.visibleCount + PAGE_SIZE, total)} / ${total})`;
+    dom.loadMoreButton.textContent = `載入更多 (${Math.min(state.renderedCount + PAGE_SIZE, total)} / ${total})`;
   }
+}
+
+function appendNextPage() {
+  if (state.isAppending || state.renderedCount >= state.scoredResults.length) {
+    return;
+  }
+
+  state.isAppending = true;
+  state.visibleCount = Math.min(state.visibleCount + PAGE_SIZE, state.scoredResults.length);
+
+  window.requestAnimationFrame(() => {
+    renderResults({ reset: false });
+    updateMeta();
+    syncLoadMore(state.scoredResults.length);
+    state.isAppending = false;
+  });
+}
+
+function setupAutoLoad() {
+  if (!("IntersectionObserver" in window)) {
+    return;
+  }
+
+  const observer = new IntersectionObserver(
+    (entries) => {
+      if (entries.some((entry) => entry.isIntersecting)) {
+        appendNextPage();
+      }
+    },
+    { rootMargin: "700px 0px" },
+  );
+
+  observer.observe(dom.loadMoreButton);
 }
 
 function openCaseDialog(caseId) {
@@ -553,6 +642,37 @@ function openCaseDialog(caseId) {
     dom.dialog.showModal();
   }
   dom.copyPromptButton.textContent = "複製 prompt";
+  updateDialogNavigation();
+}
+
+function openAdjacentCase(direction) {
+  const currentIndex = state.resultIds.indexOf(state.selectedCaseId);
+  if (currentIndex === -1) {
+    return;
+  }
+
+  const nextIndex = currentIndex + direction;
+  if (nextIndex < 0 || nextIndex >= state.resultIds.length) {
+    return;
+  }
+
+  openCaseDialog(state.resultIds[nextIndex]);
+}
+
+function updateDialogNavigation() {
+  const currentIndex = state.resultIds.indexOf(state.selectedCaseId);
+  const hasCurrent = currentIndex !== -1;
+
+  dom.previousCaseButton.disabled = !hasCurrent || currentIndex === 0;
+  dom.nextCaseButton.disabled = !hasCurrent || currentIndex === state.resultIds.length - 1;
+}
+
+function isTextEditingTarget(target) {
+  if (!(target instanceof HTMLElement)) {
+    return false;
+  }
+
+  return Boolean(target.closest("input, textarea, [contenteditable='true']"));
 }
 
 function createExcerpt(text, maxLength) {

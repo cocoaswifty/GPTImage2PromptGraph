@@ -464,6 +464,8 @@ a {
   overflow: hidden;
   display: grid;
   grid-template-rows: auto 1fr;
+  content-visibility: auto;
+  contain-intrinsic-size: 420px 560px;
   min-height: 100%;
   border: 1px solid color-mix(in oklch, var(--fg) 11%, transparent);
   border-radius: 26px;
@@ -690,6 +692,34 @@ a {
   padding-right: 4px;
 }
 
+.dialog-nav {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  padding-right: 58px;
+}
+
+.dialog-nav-button {
+  min-height: 42px;
+  border: 1px solid color-mix(in oklch, var(--fg) 12%, transparent);
+  border-radius: 999px;
+  background: color-mix(in oklch, var(--fg) 5%, transparent);
+  color: var(--fg);
+  cursor: pointer;
+  font-weight: 700;
+  transition: transform 160ms ease, border-color 160ms ease, opacity 160ms ease;
+}
+
+.dialog-nav-button:hover:not(:disabled) {
+  transform: translateY(-1px);
+  border-color: color-mix(in oklch, var(--accent) 48%, transparent);
+}
+
+.dialog-nav-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.38;
+}
+
 .dialog-header {
   display: flex;
   gap: 12px;
@@ -865,6 +895,10 @@ a {
 
   .dialog-header {
     flex-direction: column;
+    padding-right: 0;
+  }
+
+  .dialog-nav {
     padding-top: 52px;
     padding-right: 0;
   }

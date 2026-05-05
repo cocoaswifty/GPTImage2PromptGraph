@@ -22,7 +22,6 @@
     <header class="topnav">
       <a class="brand" href="#top">GPTImage2PromptGraph</a>
       <label class="search-box topnav-search" id="search">
-        <span>Search the prompt corpus</span>
         <input
           id="searchInput"
           type="search"
@@ -49,11 +48,6 @@
           <p class="lede">
             先看圖片效果，再反查完整 prompt、tag、分類與來源集合。適合快速找靈感，也適合拆解別人的圖像生成語法。
           </p>
-          <div class="hero-actions">
-            <a class="action-button primary" href="#search">開始搜尋</a>
-            <button class="action-button secondary" id="randomButton" type="button">隨機案例</button>
-            <button class="action-button secondary" id="clearButton" type="button">清除篩選</button>
-          </div>
         </div>
         <div class="hero-stats" id="stats"></div>
       </section>
@@ -86,6 +80,10 @@
           </a>
         </div>
         <div class="dialog-body">
+          <div class="dialog-nav" aria-label="案例快速瀏覽">
+            <button id="previousCaseButton" class="dialog-nav-button" type="button" aria-label="查看上一個案例">上一個</button>
+            <button id="nextCaseButton" class="dialog-nav-button" type="button" aria-label="查看下一個案例">下一個</button>
+          </div>
           <div class="dialog-header">
             <div>
               <p class="dialog-kicker" id="dialogMeta"></p>
