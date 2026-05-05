@@ -442,6 +442,12 @@ function countOverlap(left, right) {
   return total;
 }
 
+function incrementCount(map, values) {
+  for (const value of values) {
+    map.set(value, (map.get(value) || 0) + 1);
+  }
+}
+
 function matchesAny(values, selected) {
   return (values || []).some((value) => selected.has(value));
 }
