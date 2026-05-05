@@ -207,7 +207,7 @@ function renderFilterGroup(title, group, entries) {
     .join("");
 
   return `
-    <section class="filter-group" data-group="${group}">
+    <section class="filter-group" data-group="${group}" data-od-id="filter-${escapeHtml(group)}">
       <div class="group-head">
         <div>
           <h3>${escapeHtml(title)}</h3>
@@ -605,16 +605,16 @@ function resolveImage(path) {
 
 function placeholderSvg() {
   return `
-    <svg xmlns="http://www.w3.org/2000/svg" width="1200" height="900" viewBox="0 0 1200 900">
+    <svg xmlns="http://www.w3.org/2000/svg" width="1200" height="900" viewBox="0 0 1200 900" style="background: Canvas; color: CanvasText;">
       <defs>
         <linearGradient id="g" x1="0" x2="1" y1="0" y2="1">
-          <stop stop-color="#16253f" offset="0" />
-          <stop stop-color="#0b1220" offset="1" />
+          <stop stop-color="Canvas" offset="0" />
+          <stop stop-color="CanvasText" stop-opacity="0.08" offset="1" />
         </linearGradient>
       </defs>
       <rect width="1200" height="900" fill="url(#g)" />
-      <text x="80" y="150" fill="#7ee5ff" font-family="Space Grotesk, sans-serif" font-size="64" font-weight="700">No preview image</text>
-      <text x="80" y="240" fill="#9aa9c4" font-family="IBM Plex Sans TC, sans-serif" font-size="30">This case does not include a local image preview.</text>
+      <text x="80" y="150" fill="currentColor" font-family="Space Grotesk, sans-serif" font-size="64" font-weight="700">No preview image</text>
+      <text x="80" y="240" fill="currentColor" fill-opacity="0.62" font-family="IBM Plex Sans TC, sans-serif" font-size="30">This case does not include a local image preview.</text>
     </svg>
   `;
 }

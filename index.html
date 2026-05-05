@@ -17,35 +17,43 @@
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
-    <div class="bg-orb bg-orb-a"></div>
-    <div class="bg-orb bg-orb-b"></div>
-    <div class="bg-grid"></div>
+    <div class="grain" aria-hidden="true"></div>
 
-    <main class="shell">
-      <section class="hero panel">
+    <header class="topnav">
+      <a class="brand" href="#top">GPTImage2PromptGraph</a>
+      <nav aria-label="主要導覽">
+        <a href="#search">搜尋</a>
+        <a href="#filters">篩選</a>
+        <a href="https://github.com/cocoaswifty/GPTImage2PromptGraph" target="_blank" rel="noreferrer">GitHub</a>
+      </nav>
+    </header>
+
+    <main id="top" class="shell">
+      <section class="hero panel" data-od-id="hero-split">
         <div class="hero-copy">
-          <p class="eyebrow">GPT-Image-2 Prompt Graph</p>
-          <h1>快速瀏覽 prompt 與圖片效果</h1>
+          <p class="eyebrow">GPT-Image-2 Prompt Graph · Live Demo</p>
+          <h1>把 prompt 案例當成可搜尋的圖像資料庫。</h1>
           <p class="lede">
-            用關鍵字、tag、分類與來源集合快速縮小範圍，再打開案例看完整 prompt、圖片與原始來源。
+            先看圖片效果，再反查完整 prompt、tag、分類與來源集合。適合快速找靈感，也適合拆解別人的圖像生成語法。
           </p>
           <div class="hero-actions">
-            <button class="action-button primary" id="randomButton" type="button">隨機案例</button>
+            <a class="action-button primary" href="#search">開始搜尋</a>
+            <button class="action-button secondary" id="randomButton" type="button">隨機案例</button>
             <button class="action-button secondary" id="clearButton" type="button">清除篩選</button>
           </div>
         </div>
         <div class="hero-stats" id="stats"></div>
       </section>
 
-      <section class="controls panel" aria-label="搜尋與篩選">
+      <section class="controls panel" id="search" aria-label="搜尋與篩選" data-od-id="search-controls">
         <label class="search-box">
-          <span>搜尋</span>
+          <span>Search the prompt corpus</span>
           <input
             id="searchInput"
             type="search"
             autocomplete="off"
             spellcheck="false"
-            placeholder="輸入 prompt 關鍵字、風格、主題、語言..."
+            placeholder="輸入 prompt 關鍵字、風格、主題、語言，例如 typography、poster、日系..."
           />
         </label>
         <div class="control-meta">
@@ -54,20 +62,20 @@
         </div>
       </section>
 
-      <section class="panel chip-panel">
+      <section class="panel chip-panel" data-od-id="quick-entry">
         <div class="chip-panel-header">
           <h2>快速入口</h2>
-          <p>先點常用 tag / 分類 / 來源集合，快速進入候選池。</p>
+          <p>不要從 800 多筆開始瞎滑。先切一個高訊號 tag，再用搜尋補刀。</p>
         </div>
         <div class="suggested-chips" id="suggestedChips"></div>
       </section>
 
-      <section class="layout">
+      <section class="layout" id="filters" data-od-id="results-browser">
         <aside class="filters panel">
           <div id="filterGroups"></div>
         </aside>
 
-        <section class="results panel">
+        <section class="results panel" data-od-id="case-results">
           <div id="results" class="card-grid" aria-live="polite"></div>
           <button class="load-more" id="loadMoreButton" type="button">載入更多</button>
         </section>

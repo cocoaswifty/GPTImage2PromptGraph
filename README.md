@@ -1,6 +1,6 @@
 # GPT-Image-2 Prompt Graph Skill
 
-這個目錄是給 LLM / Agent 直接檢索用的整合版 prompt corpus，也是一個可安裝的 Codex Skill。使用者需要設計、繪圖、生成圖片、UI mockup、海報、商品圖、資訊圖、角色設定或品牌視覺時，Skill 會用漸進式披露方式從本圖譜找到合適 prompt 作為設計參考。
+這個目錄是給 LLM / Agent 直接檢索用的整合版 prompt corpus，也是一個可安裝的 Skill。使用者需要設計、繪圖、生成圖片、UI mockup、海報、商品圖、資訊圖、角色設定或品牌視覺時，Skill 會用漸進式披露方式從本圖譜找到合適 prompt 作為設計參考。
 
 不要把整包資料一次丟給 LLM。正確方式是先讀報告與索引，再查少量候選案例，最後只讀選中的完整 prompt。
 
@@ -9,7 +9,7 @@ Live Demo: [https://cocoaswifty.github.io/GPTImage2PromptGraph/](https://cocoasw
 ## 檔案
 
 - `SKILL.md`: Skill 入口與工作流。
-- `agents/openai.yaml`: Codex Skill metadata。
+- `agents/openai.yaml`: Skill metadata。
 - `index.html`: GitHub Pages 瀏覽入口。
 - `styles.css`: 靜態頁樣式。
 - `app.js`: 瀏覽與搜尋互動邏輯。
@@ -26,38 +26,13 @@ Live Demo: [https://cocoaswifty.github.io/GPTImage2PromptGraph/](https://cocoasw
 
 ## 安裝 Skill
 
-把這個 `prompt-graph/` 目錄複製或連結到 Codex skills 目錄，並命名為 `design-prompt-graph`。
+把這個 `prompt-graph/` 目錄複製或連結到 skills 目錄，並命名為 `design-prompt-graph`。
 
-### 方式一：複製安裝
-
-```bash
-mkdir -p ~/.codex/skills
-cp -R prompt-graph ~/.codex/skills/design-prompt-graph
-```
-
-### 方式二：用 symlink 安裝
-
-適合你會持續更新 GitHub repo 的情況。
+### 複製安裝
 
 ```bash
-mkdir -p ~/.codex/skills
-ln -s /absolute/path/to/prompt-graph ~/.codex/skills/design-prompt-graph
-```
-
-安裝後重新開啟 Codex，Skill 名稱是：
-
-```text
-$design-prompt-graph
-```
-
-用法範例：
-
-```text
-Use $design-prompt-graph to find reference prompts for a luxury skincare product ad.
-```
-
-```text
-Use $design-prompt-graph to design a Chinese RAG explainer infographic.
+mkdir -p ~/skills
+cp -R prompt-graph ~/skills/design-prompt-graph
 ```
 
 ## 手動查詢
