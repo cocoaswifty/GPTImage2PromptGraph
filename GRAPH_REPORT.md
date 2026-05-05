@@ -6,8 +6,14 @@
 
 - `SKILL.md`: Skill 入口與漸進式披露工作流。
 - `agents/openai.yaml`: Codex UI metadata。
-- `scripts/query_prompt_graph.py`: 輕量查詢器，避免一次載入全部 prompt。
+- `index.html`: GitHub Pages 瀏覽入口。
+- `styles.css`: 靜態頁樣式。
+- `app.js`: 瀏覽與搜尋互動邏輯。
+- `scripts/query_prompt_graph.sh`: bash wrapper，避免對使用者要求 `uv`。
+- `scripts/query_prompt_graph.py`: 查詢器核心，避免一次載入全部 prompt。
+- `scripts/build_site_data.py`: 由 `cases.jsonl` 產生瀏覽頁可用的靜態資料。
 - `references/prompt-graph-schema.md`: 欄位與 graph relation 說明。
+- `data/cases.json`: 瀏覽頁載入的 prompt 資料。
 - `graph.json`: graphify/networkx 風格的 nodes + links 圖譜。
 - `cases.jsonl`: 每行一個完整 prompt case，適合 RAG/grep/向量化。
 - `index.json`: tag/category/source/origin_collection 到 case id 的倒排索引。
@@ -77,6 +83,6 @@
 ## LLM Retrieval Pattern
 
 1. 先讀本報告理解分類、標籤與資料規模。
-2. 用 `scripts/query_prompt_graph.py` 查少量候選 case。
+2. 用 `scripts/query_prompt_graph.sh` 查少量候選 case。
 3. 只對選中的 case 讀完整 prompt。
 4. 將參考 prompt 的結構改寫成符合使用者任務的新設計 prompt。

@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta
+      name="description"
+      content="GPT-Image-2 Prompt Graph browser for quickly searching prompts and previewing image examples."
+    />
+    <title>GPT-Image-2 Prompt Graph</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+TC:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="bg-orb bg-orb-a"></div>
+    <div class="bg-orb bg-orb-b"></div>
+    <div class="bg-grid"></div>
+
+    <main class="shell">
+      <section class="hero panel">
+        <div class="hero-copy">
+          <p class="eyebrow">GPT-Image-2 Prompt Graph</p>
+          <h1>快速瀏覽 prompt 與圖片效果</h1>
+          <p class="lede">
+            用關鍵字、tag、分類與來源集合快速縮小範圍，再打開案例看完整 prompt、圖片與原始來源。
+          </p>
+          <div class="hero-actions">
+            <button class="action-button primary" id="randomButton" type="button">隨機案例</button>
+            <button class="action-button secondary" id="clearButton" type="button">清除篩選</button>
+          </div>
+        </div>
+        <div class="hero-stats" id="stats"></div>
+      </section>
+
+      <section class="controls panel" aria-label="搜尋與篩選">
+        <label class="search-box">
+          <span>搜尋</span>
+          <input
+            id="searchInput"
+            type="search"
+            autocomplete="off"
+            spellcheck="false"
+            placeholder="輸入 prompt 關鍵字、風格、主題、語言..."
+          />
+        </label>
+        <div class="control-meta">
+          <div id="resultCount" class="result-count">載入中...</div>
+          <div class="result-subcopy" id="resultSubcopy"></div>
+        </div>
+      </section>
+
+      <section class="panel chip-panel">
+        <div class="chip-panel-header">
+          <h2>快速入口</h2>
+          <p>先點常用 tag / 分類 / 來源集合，快速進入候選池。</p>
+        </div>
+        <div class="suggested-chips" id="suggestedChips"></div>
+      </section>
+
+      <section class="layout">
+        <aside class="filters panel">
+          <div id="filterGroups"></div>
+        </aside>
+
+        <section class="results panel">
+          <div id="results" class="card-grid" aria-live="polite"></div>
+          <button class="load-more" id="loadMoreButton" type="button">載入更多</button>
+        </section>
+      </section>
+    </main>
+
+    <dialog id="caseDialog" class="case-dialog">
+      <form method="dialog" class="dialog-shell">
+        <button class="dialog-close" value="cancel" aria-label="關閉">×</button>
+        <div class="dialog-media">
+          <img id="dialogImage" alt="" />
+          <div class="dialog-image-actions">
+            <a id="openImageLink" class="dialog-link" target="_blank" rel="noreferrer">開啟圖片</a>
+            <a id="openSourceLink" class="dialog-link" target="_blank" rel="noreferrer">原始來源</a>
+          </div>
+        </div>
+        <div class="dialog-body">
+          <div class="dialog-header">
+            <div>
+              <p class="dialog-kicker" id="dialogMeta"></p>
+              <h2 id="dialogTitle"></h2>
+            </div>
+            <button id="copyPromptButton" class="action-button primary" type="button">複製 prompt</button>
+          </div>
+          <div class="dialog-tags" id="dialogTags"></div>
+          <p id="dialogDescription" class="dialog-description"></p>
+          <pre id="dialogPrompt" class="prompt-block"></pre>
+          <div class="dialog-footnotes" id="dialogFootnotes"></div>
+        </div>
+      </form>
+    </dialog>
+
+    <script type="module" src="app.js"></script>
+  </body>
+</html>

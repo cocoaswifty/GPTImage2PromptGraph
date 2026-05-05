@@ -20,7 +20,7 @@ If the skill folder data is missing, search upward from the current workspace fo
    - Use case: portrait, product/e-commerce, poster, infographic, UI, character, brand/logo, storyboard, architecture/interior, food, fashion, game, template.
    - Style cues: photography, illustration, anime, 3D render, retro, cyberpunk, minimalism, Chinese ink, typography-heavy, etc.
    - Output constraints: aspect ratio, exact text, language, number of panels, image/reference preservation.
-3. Query candidates with `scripts/query_prompt_graph.py`, resolving the script path relative to this skill folder, not relative to the user's current project. Start with broad tags and the raw user request. Do not load all cases into context.
+3. Query candidates with `scripts/query_prompt_graph.sh`, resolving the script path relative to this skill folder, not relative to the user's current project. Start with broad tags and the raw user request. Do not load all cases into context.
 4. Inspect the top 3-8 candidate summaries. If needed, rerun the query with narrower tags/category or `--full` for a small limit.
 5. Read complete case records only for the selected candidates, either from script `--full` output or from `cases.jsonl` by id.
 6. Synthesize the final design prompt or design guidance using patterns from the retrieved cases. Preserve the user's actual goal over the reference prompt's subject.
@@ -29,14 +29,14 @@ If the skill folder data is missing, search upward from the current workspace fo
 ## Query Examples
 
 ```bash
-python scripts/query_prompt_graph.py \
+bash scripts/query_prompt_graph.sh \
   --query "luxury perfume ecommerce product ad black gold marble" \
   --tags ecommerce product poster photography brand \
   --limit 6
 ```
 
 ```bash
-python scripts/query_prompt_graph.py \
+bash scripts/query_prompt_graph.sh \
   --query "technical RAG explainer infographic Chinese labels" \
   --tags infographic typography ui \
   --limit 5 --full

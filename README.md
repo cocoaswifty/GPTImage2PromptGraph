@@ -8,8 +8,14 @@
 
 - `SKILL.md`: Skill 入口與工作流。
 - `agents/openai.yaml`: Codex Skill metadata。
+- `index.html`: GitHub Pages 瀏覽入口。
+- `styles.css`: 靜態頁樣式。
+- `app.js`: 瀏覽與搜尋互動邏輯。
 - `scripts/query_prompt_graph.py`: 查詢 prompt graph 的輕量腳本。
+- `scripts/query_prompt_graph.sh`: bash wrapper，方便沒有 `uv` 的環境直接呼叫。
+- `scripts/build_site_data.py`: 由 `cases.jsonl` 產生瀏覽頁可用的靜態資料。
 - `references/prompt-graph-schema.md`: graph/case 欄位說明。
+- `data/cases.json`: 瀏覽頁載入的 prompt 資料。
 - `GRAPH_REPORT.md`: 快速總覽、來源統計、熱門分類與標籤。
 - `graph.json`: graphify / NetworkX 風格圖譜，包含 `nodes` 與 `links`。
 - `cases.jsonl`: 每行一個完整 prompt case，最適合直接檢索、RAG、向量化。
@@ -57,7 +63,7 @@ Use $design-prompt-graph to design a Chinese RAG explainer infographic.
 不透過 Skill 也可以直接查：
 
 ```bash
-python scripts/query_prompt_graph.py \
+bash scripts/query_prompt_graph.sh \
   --query "luxury perfume ecommerce product ad black gold marble" \
   --tags ecommerce poster photography brand \
   --limit 5
@@ -66,7 +72,7 @@ python scripts/query_prompt_graph.py \
 需要完整 prompt 時加上 `--full`，但 limit 要小：
 
 ```bash
-python scripts/query_prompt_graph.py \
+bash scripts/query_prompt_graph.sh \
   --query "technical RAG explainer infographic Chinese labels" \
   --tags infographic typography ui \
   --limit 3 \
@@ -76,10 +82,16 @@ python scripts/query_prompt_graph.py \
 ## 建議檢索流程
 
 1. 先讀 `GRAPH_REPORT.md` 理解整體分佈。
-2. 用 `scripts/query_prompt_graph.py` 或 `index.json` 依 `tag`、`category` 或 `source` 找候選 case id。
+2. 用 `scripts/query_prompt_graph.sh` 或 `index.json` 依 `tag`、`category` 或 `source` 找候選 case id。
 3. 從 `cases.jsonl` 取回完整 case。每筆都有 `retrieval_text`，可直接餵給 LLM。
 4. 需要追溯原始批次時看 `origin_collection`，不要尋找已刪除的原始資料夾。
 5. 需要跨來源比較時讀 `graph.json`，走 `similar_title`、`has_tag`、`contains_case` 關係。
+
+## Web Browser
+
+1. 直接開 `index.html` 可瀏覽 prompt 與圖片預覽。
+2. 更新 `cases.jsonl` 後先跑 `python scripts/build_site_data.py`，把資料同步到 `data/cases.json`。
+3. GitHub Actions 會在推送到 `main` 後自動部署 GitHub Pages。
 
 ## Case Schema
 
