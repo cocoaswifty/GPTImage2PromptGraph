@@ -211,7 +211,6 @@ function renderFilterGroup(title, group, entries) {
       <div class="group-head">
         <div>
           <h3>${escapeHtml(title)}</h3>
-          <p class="group-note">點選可多選，與搜尋字串一起縮小結果。</p>
         </div>
         <span class="group-count">${entries.length}</span>
       </div>
