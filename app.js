@@ -27,10 +27,11 @@ const state = {
   visibleCount: PAGE_SIZE,
   renderedCount: 0,
   selectedCaseId: null,
+  dialogCaseId: null,
   resultIds: [],
   scoredResults: [],
   candidateCount: 0,
-  isAppending: false,
+  appendFrame: 0,
 };
 
 const dom = {
@@ -131,19 +132,11 @@ function bindEvents() {
     });
   }
 
-  dom.loadMoreButton.addEventListener("click", () => {
-    appendNextPage();
+  dom.loadMoreButton?.addEventListener("click", () => {
+    appendNextPage({ force: true });
   });
 
-  dom.previousCaseButton.addEventListener("click", () => {
-    openAdjacentCase(-1);
-  });
-
-  dom.nextCaseButton.addEventListener("click", () => {
-    openAdjacentCase(1);
-  });
-
-  dom.copyPromptButton.addEventListener("click", async () => {
+  dom.copyPromptButton?.addEventListener("click", async () => {
     const item = cache.casesById.get(state.selectedCaseId);
     if (!item) {
       return;
@@ -155,8 +148,9 @@ function bindEvents() {
     }, 1200);
   });
 
-  dom.dialog.addEventListener("close", () => {
+  dom.dialog?.addEventListener("close", () => {
     state.selectedCaseId = null;
+    state.dialogCaseId = null;
   });
 
   document.addEventListener("keydown", (event) => {
@@ -164,10 +158,10 @@ function bindEvents() {
       event.preventDefault();
       dom.searchInput.focus();
     }
-    if (event.key === "Escape" && dom.dialog.open) {
+    if (event.key === "Escape" && dom.dialog?.open) {
       dom.dialog.close();
     }
-    if (dom.dialog.open && !isTextEditingTarget(event.target)) {
+    if (dom.dialog?.open && !isTextEditingTarget(event.target)) {
       if (event.key === "ArrowLeft") {
         event.preventDefault();
         openAdjacentCase(-1);
@@ -177,6 +171,15 @@ function bindEvents() {
         openAdjacentCase(1);
       }
     }
+  });
+
+  document.addEventListener("click", (event) => {
+    const navButton = event.target instanceof HTMLElement ? event.target.closest("[data-dialog-nav]") : null;
+    if (!navButton || navButton.disabled) {
+      return;
+    }
+
+    openAdjacentCase(Number(navButton.dataset.dialogNav));
   });
 
   setupAutoLoad();
@@ -299,7 +302,10 @@ function applyState({ resetSelection = false, resetRendered = false } = {}) {
   }
   if (resetRendered) {
     state.renderedCount = 0;
-    state.isAppending = false;
+    if (state.appendFrame) {
+      window.cancelAnimationFrame(state.appendFrame);
+      state.appendFrame = 0;
+    }
   }
 
   const filtered = getFilteredCases();
@@ -582,30 +588,44 @@ function updateMeta() {
 
 function syncLoadMore(total) {
   const shouldShow = total > state.renderedCount;
+  if (!dom.loadMoreButton) {
+    return;
+  }
   dom.loadMoreButton.hidden = !shouldShow;
   if (shouldShow) {
     dom.loadMoreButton.textContent = `載入更多 (${Math.min(state.renderedCount + PAGE_SIZE, total)} / ${total})`;
   }
 }
 
-function appendNextPage() {
-  if (state.isAppending || state.renderedCount >= state.scoredResults.length) {
+function appendNextPage({ force = false } = {}) {
+  if (!state.scoredResults.length || state.renderedCount >= state.scoredResults.length) {
+    return;
+  }
+  if (state.appendFrame) {
+    if (!force) {
+      return;
+    }
+    window.cancelAnimationFrame(state.appendFrame);
+    state.appendFrame = 0;
+  }
+
+  const nextVisibleCount = Math.min(Math.max(state.visibleCount, state.renderedCount) + PAGE_SIZE, state.scoredResults.length);
+  if (nextVisibleCount <= state.renderedCount) {
     return;
   }
 
-  state.isAppending = true;
-  state.visibleCount = Math.min(state.visibleCount + PAGE_SIZE, state.scoredResults.length);
+  state.visibleCount = nextVisibleCount;
 
-  window.requestAnimationFrame(() => {
+  state.appendFrame = window.requestAnimationFrame(() => {
     renderResults({ reset: false });
     updateMeta();
     syncLoadMore(state.scoredResults.length);
-    state.isAppending = false;
+    state.appendFrame = 0;
   });
 }
 
 function setupAutoLoad() {
-  if (!("IntersectionObserver" in window)) {
+  if (!dom.loadMoreButton || !("IntersectionObserver" in window)) {
     return;
   }
 
@@ -628,6 +648,7 @@ function openCaseDialog(caseId) {
   }
 
   state.selectedCaseId = item.id;
+  state.dialogCaseId = item.id;
   const imageUrl = resolveImage(item.images?.[0]);
 
   dom.dialogImage.src = imageUrl;
@@ -638,33 +659,53 @@ function openCaseDialog(caseId) {
   dom.dialogPrompt.textContent = item.prompt || "";
   dom.openImageLink.href = imageUrl;
 
-  if (!dom.dialog.open) {
+  if (dom.dialog && !dom.dialog.open) {
     dom.dialog.showModal();
   }
-  dom.copyPromptButton.textContent = "複製 prompt";
+  if (dom.copyPromptButton) {
+    dom.copyPromptButton.textContent = "複製 prompt";
+  }
   updateDialogNavigation();
 }
 
 function openAdjacentCase(direction) {
-  const currentIndex = state.resultIds.indexOf(state.selectedCaseId);
+  const currentId = state.dialogCaseId || state.selectedCaseId;
+  const navigationIds = getNavigationIds();
+  const currentIndex = navigationIds.indexOf(currentId);
   if (currentIndex === -1) {
     return;
   }
 
   const nextIndex = currentIndex + direction;
-  if (nextIndex < 0 || nextIndex >= state.resultIds.length) {
+  if (nextIndex < 0 || nextIndex >= navigationIds.length) {
     return;
   }
 
-  openCaseDialog(state.resultIds[nextIndex]);
+  openCaseDialog(navigationIds[nextIndex]);
 }
 
 function updateDialogNavigation() {
-  const currentIndex = state.resultIds.indexOf(state.selectedCaseId);
+  if (!dom.previousCaseButton || !dom.nextCaseButton) {
+    return;
+  }
+
+  const currentId = state.dialogCaseId || state.selectedCaseId;
+  const navigationIds = getNavigationIds();
+  const currentIndex = navigationIds.indexOf(currentId);
   const hasCurrent = currentIndex !== -1;
 
   dom.previousCaseButton.disabled = !hasCurrent || currentIndex === 0;
-  dom.nextCaseButton.disabled = !hasCurrent || currentIndex === state.resultIds.length - 1;
+  dom.nextCaseButton.disabled = !hasCurrent || currentIndex === navigationIds.length - 1;
+}
+
+function getNavigationIds() {
+  if (state.resultIds.length) {
+    return state.resultIds;
+  }
+
+  return [...document.querySelectorAll("[data-case-id]")]
+    .map((card) => card.dataset.caseId)
+    .filter(Boolean);
 }
 
 function isTextEditingTarget(target) {
