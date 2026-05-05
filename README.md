@@ -4,6 +4,8 @@
 
 不要把整包資料一次丟給 LLM。正確方式是先讀報告與索引，再查少量候選案例，最後只讀選中的完整 prompt。
 
+Live Demo: [https://cocoaswifty.github.io/GPTImage2PromptGraph/](https://cocoaswifty.github.io/GPTImage2PromptGraph/)
+
 ## 檔案
 
 - `SKILL.md`: Skill 入口與工作流。
